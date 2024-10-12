@@ -1,34 +1,36 @@
 import telebot
 from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from downloader import downloadSong
+from video_search import search
+
 API_TOKEN = '6987658935:AAFd_tGI8-rAZA-Q5OCNN1ep6ramcTwnN_4'
 
 bot = telebot.TeleBot(API_TOKEN)
 
+botCommands = ['info', 'menu', 'list', 'stop']
 
-# Handle '/start' and '/help'
-@bot.message_handler(commands=['help', 'start'])
-def send_welcome(message):
-    bot.reply_to(message, """\
-Hi there, """)
 
-buttons = [[]]
-buttons.append(InlineKeyboardButton("Btn1", callback_data="btn1"))
-buttons.append(InlineKeyboardButton("Btn2", callback_data="btn2"))
+@bot.message_handler(commands=['info'])
+def send_info(message):
+    bot.send_message(message.chat.id, "I am a bot and can be used to listen/store/search for music")
+    # buttons = []
+    # buttons.append(InlineKeyboardButton("Btn1", callback_data="btn1"))
+    # buttons.append(InlineKeyboardButton("Btn2", callback_data="btn2"))
+    # markup = types.InlineKeyboardMarkup(row_width=2)
+    # #
+    # markup.add(buttons[0], buttons[1])
+    # bot.send_message(message.chat.id, text='List of commands', reply_markup=markup)
 
-markup = types.InlineKeyboardMarkup(row_width=2)
-button = types.InlineKeyboardButton()
+@bot.message_handler(commands=['menu'])
+def send_menu(message):
+    buttons = []
+    buttons.append(InlineKeyboardButton("Btn1", callback_data="btn1"))
+    buttons.append(InlineKeyboardButton("Btn2", callback_data="btn2"))
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup.add(buttons[0], buttons[1])
+    bot.send_message(message.chat.id, text='List of commands', reply_markup=markup)
 
-markup.add(button_foo, button_bar, button_a, button_b)
-
-bot.send_message(message.chat.id, text='Some text', reply_markup=markup)
-
-def gen_markup():
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 1
-    for i in buttons:
-        markup.add(i)
-    return markup
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -39,15 +41,18 @@ def callback_query(call):
 
 @bot.message_handler(func=lambda message: True)
 def message_handler(message):
-    bot.send_message(message.chat.id, "Yes/no?", reply_markup=gen_markup())
+    #bot.copy_message(message.chat.id, message)
+    videos = search(message.text)
+    buttons = []
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    n = 0
+    while n <= videos[0].__len__()-1:
+        title = videos[0][n]['title']
+        buttons.append(InlineKeyboardButton(title, callback_data="btn"+str(n)))
+        markup.add(buttons[n])
+        n+=1
+    bot.send_message(message.chat.id, text='List', reply_markup=markup)
 
-@bot.inline_handler(func=lambda message: ['button'])
-def show_choices(message):
-    bot.message_handler(message)
-# Handle all other messages with content_type 'text' (content_types defaults to ['text'])
-@bot.message_handler(func=lambda message: True)
-def echo_message(message):
-    bot.reply_to(message, message.text)
-
-
-bot.infinity_polling()
+# Start the bot
+if __name__ == '__main__':
+    bot.polling(none_stop=True)
