@@ -17,37 +17,33 @@ def send_info(message):
 
 
 buttons = []
-markup_1 = types.InlineKeyboardMarkup(row_width=3)
-markup_2 = types.InlineKeyboardMarkup(row_width=3)
-
 
 def fill_markup(half):
     markup = types.InlineKeyboardMarkup(row_width=3)
-    if half == 0:
-        i = 0
-        while i <= buttons.__len__() / 2 - 1:
-            markup.add(buttons[i])
-            i += 1
-    elif half == 1:
-        i = 10
-        while i <= buttons.__len__() - 1:
-            markup.add(buttons[i])
-            i += 1
-    markup.add(InlineKeyboardButton('<', callback_data="BtnBack"), InlineKeyboardButton('♥', callback_data="BtnLike"),
-               InlineKeyboardButton('>', callback_data="BtnForward"))
-    return markup
+    button_count = len(buttons)
+    midpoint = int(button_count // 2)
 
+    if half == 0:
+        for i in range(midpoint):
+            markup.add(buttons[int(i)])
+
+    elif half == 1:
+        for i in range(midpoint, button_count):
+            markup.add(buttons[int(i)])
+    markup.add(
+  InlineKeyboardButton('<', callback_data="BtnBack"),
+        InlineKeyboardButton('♥', callback_data="BtnLike"),
+        InlineKeyboardButton('>', callback_data="BtnForward"))
+
+    return markup
 
 def fill_buttons(message):
     videos = search(message.text)
-    n = 0
-    while n <= videos[0].__len__() - 1:
-        title = videos[0][n]['title']
-        buttons.append(InlineKeyboardButton(title, callback_data="btn" + videos[0][n]['link']))
-        n += 1
+    for video in videos:
+        title = video['title']
+        link = video['link']
+        buttons.append(InlineKeyboardButton(title, callback_data="btn" + link))
 
-
-#links =[]
 @bot.message_handler(func=lambda message: True)
 def message_handler(message):
     fill_buttons(message)
@@ -67,6 +63,7 @@ def callback_buttons(call):
             if call.data == i.callback_data:
                 buttons.clear()
                 youtubeSongDownloader((i.callback_data)[3:])
+
                 bot.send_audio(chat_id=call.message.chat.id, audio=open('Music//' + i.text + '.mp3', 'rb'))
 
 
